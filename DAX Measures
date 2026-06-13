@@ -1,0 +1,43 @@
+- I created a Date Axis Parameter for 'Month' and 'Quarter' filter.
+
+## DAX Measures:
+
+1. DayNo = WEEKDAY('dw Dim_Date'[Full_Date],2)
+2. WeekDay = FORMAT('dw Dim_Date'[Full_Date],"dddd")
+3. Dynamic Page Title - 
+VehiclePageTitle = IF(
+    HASONEVALUE('dw Dim_Vehicle'[Vehicle_Type]),
+    SELECTEDVALUE('dw Dim_Vehicle'[Vehicle_Type]),
+    ""
+)
+4. TotalBookings = COUNT('dw Fact_Rides'[Booking_ID])
+5. TotalRevenue = SUM('dw Fact_Rides'[Booking_Value])
+6. Cancellation_rate = DIVIDE(CALCULATE([TotalBookings], 'dw Dim_Status'[Booking_Status] in {
+    "Cancelled by Driver", "Cancelled by Customer"}),[TotalBookings],0)
+7. cancelledRides = CALCULATE(COUNT('dw Fact_Rides'[Booking_ID]), 'dw Dim_Status'[Booking_Status] in {
+    "Cancelled by Customer", "Cancelled by Driver"})
+8. CompletedRides = CALCULATE(COUNT('dw Fact_Rides'[Booking_ID]), 'dw Dim_Status'[Booking_Status]="Completed")
+9. Completion_rate = DIVIDE(CALCULATE(COUNT('dw Fact_Rides'[Booking_ID]),'dw Dim_Status'[Booking_Status]="Completed"), 
+    [TotalBookings],0)
+10. Cumulative % = 
+VAR CurrentRevenue = [TotalRevenue]
+VAR RunningRevenue =
+    CALCULATE(
+        [TotalRevenue],
+        FILTER(
+            ALL('dw Dim_Vehicle'),
+            [TotalRevenue] >= CurrentRevenue
+        )
+    )
+VAR TotalRevenue =
+    CALCULATE(
+        [TotalRevenue],
+        ALL('dw Dim_Vehicle')
+    )
+RETURN
+DIVIDE(
+    RunningRevenue,
+    TotalRevenue
+)
+11. CustomerCancelledRides = CALCULATE(COUNTROWS('dw Fact_Rides'), 'dw Fact_Rides'[Cancelled_Rides_by_Customer]=TRUE())
+12. DriverCancelledRides = CALCULATE(COUNTROWS('dw Fact_Rides'), 'dw Fact_Rides'[Cancelled_Rides_by_Driver]=True())
